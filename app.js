@@ -1,31 +1,31 @@
 // Using Express JS for faster web app development.
 const express = require("express");
+const mongoose = require("mongoose");
+const Login = require("./model/login")
 
 // Create an app using Express.
 const app = express();
+
+
+const dbURI = "mongodb://admin:admin@127.0.0.1:27017/LMS";
+mongoose.connect(dbURI, {useNewUrlParser: true, useUnifiedTopology: true})
+    .then((result) => {
+        console.log("Connection MongoDB - LMS");
+        // Make the server to listen on 3000/tcp.
+        app.listen(3000, () => {
+            console.log("Server started on port 3000/tcp")
+        });
+    })
+    .catch((err) => {
+        console.log("Error: " + err)
+    })
 
 // Register EJS as the view engine (NOTE: jade templating is the default)
 // Reference: https://expressjs.com/en/guide/using-template-engines.html
 app.set("view engine", "ejs");
 app.use(express.urlencoded({extended: false}));
 
-// Make the server to listen on 3000/tcp.
-app.listen(3000, () => {
-    console.log("Server started on port 3000/tcp")
-});
 
-// NOTE: Student login credential is hardcoded for now in the code.
-// TODO: Later we can move this data to MongoDB and then to Azure Active Directory.
-const students = [
-    {
-        "email": "rajan@rathinamtrainers.com",
-        "password": "rajan123"
-    },
-    {
-        "email": "vipin@rathinamtrainers.com",
-        "password": "vipin123"
-    }
-]
 
 // When users access the server from browser, this function will return the login page.
 app.get("/", (req, res) => {
@@ -36,14 +36,21 @@ app.get("/", (req, res) => {
 // This function will validate the credentials and provide the login process result (Succeeded/Failed).
 app.post("/login", (req, res) => {
     console.log(req.body)
-
     var loginStatus = "Failed";
-    for (let i = 0; i < students.length; i++) {
-        if (req.body.email == students[i]["email"]
-            && req.body.password == students[i]["password"])
-        {
-            loginStatus = "Succeeded"
+
+    Login.find({
+        $and: [
+            { email: req.body.email },
+            { password: req.body.password }
+        ]
+    }).then(result => {
+        if (result.length == 1) {
+            loginStatus = "Success"
         }
-    }
+    })
+    .catch((err) => {
+        console.log("Error: " + err)
+    })
+
     res.render("dashboard", {status: loginStatus})
 })
