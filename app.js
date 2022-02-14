@@ -44,13 +44,13 @@ app.post("/login", (req, res) => {
             { password: req.body.password }
         ]
     }).then(result => {
+        console.log(result)
         if (result.length == 1) {
             loginStatus = "Success"
         }
+        res.render("dashboard", {status: loginStatus})
     })
     .catch((err) => {
         console.log("Error: " + err)
     })
-
-    res.render("dashboard", {status: loginStatus})
 })
